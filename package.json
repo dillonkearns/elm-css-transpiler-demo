@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "build": "npm install && cp -r public dist/ && elm make src/Main.elm --output dist/elm.js"
+  },
+  "devDependencies": {
+    "elm-tooling": "^1.8.0"
+  }
+}
