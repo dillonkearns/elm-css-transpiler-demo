@@ -1,8 +1,11 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
+import Css
+import Html as H exposing (Html)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
+import Html.Styled.Events exposing (onClick)
 
 
 type alias Model =
@@ -29,13 +32,19 @@ update msg model =
             { model | count = model.count - 1 }
 
 
-view : Model -> Html Msg
+view : Model -> H.Html Msg
 view model =
-    div []
+    div
+        [ css
+            [ Css.backgroundColor (Css.hex "#ff375a")
+            , Css.color (Css.hex "#ffffff")
+            ]
+        ]
         [ button [ onClick Increment ] [ text "+1" ]
         , div [] [ text <| String.fromInt model.count ]
         , button [ onClick Decrement ] [ text "-1" ]
         ]
+        |> Html.Styled.toUnstyled
 
 
 main : Program () Model Msg
