@@ -208,7 +208,7 @@ finalEvaluationForProject projectContext =
                 , details = [ "" ]
                 }
                 range
-                [ Review.Fix.replaceRangeBy range """"import Css\\n\\nclasses = [ [ Css.backgroundColor (Css.hex "#ff375a"), Css.color (Css.hex "#ffffff") ] ]"
+                [ Review.Fix.replaceRangeBy range """"import Css\\n\\nclasses = [ [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ]"
 """
                 ]
             ]
