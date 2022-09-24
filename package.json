@@ -5,5 +5,8 @@
   "devDependencies": {
     "elm-review": "^2.7.5",
     "elm-tooling": "^1.8.0"
+  },
+  "dependencies": {
+    "node-elm-compiler": "^5.0.6"
   }
 }
