@@ -97,18 +97,20 @@ expressionVisitor node direction context =
     --                )
     --
     --            _ ->
-    case context.range of
-        Just _ ->
-            case node |> Node.value of
-                Expression.Literal nodes ->
+    if context.isSpecialModule then
+        case node |> Node.value of
+            Expression.Literal literalString ->
+                if literalString == "" then
                     ( [], { context | range = Just (Node.range node) } )
 
-                _ ->
+                else
                     ( [], context )
 
-        --( [], context )
-        Nothing ->
-            ( [], context )
+            _ ->
+                ( [], context )
+
+    else
+        ( [], context )
 
 
 type alias ProjectContext =
@@ -122,6 +124,7 @@ type alias ModuleContext =
       --, exposed : Dict String Range
       --, used : Set ( ModuleName, String )
       range : Maybe Range
+    , isSpecialModule : Bool
     }
 
 
@@ -137,6 +140,7 @@ fromProjectToModule moduleKey moduleName projectContext =
     --, used = Set.empty
     --}
     { range = Nothing
+    , isSpecialModule = False
     }
 
 
@@ -161,7 +165,8 @@ fromModuleToProject moduleKey moduleName moduleContext =
       --, used = moduleContext.used
       fixPlaceholderModuleKey =
         if Node.value moduleName == [ "StubCssGenerator" ] then
-            Just ( moduleKey, moduleContext.range |> Maybe.withDefault (moduleName |> Node.range) )
+            moduleContext.range
+                |> Maybe.map (Tuple.pair moduleKey)
 
         else
             Nothing
@@ -182,8 +187,8 @@ foldProjectContexts newContext previousContext =
       --, used = Set.union newContext.used previousContext.used
       fixPlaceholderModuleKey =
         Maybe.Extra.or
-            newContext.fixPlaceholderModuleKey
             previousContext.fixPlaceholderModuleKey
+            newContext.fixPlaceholderModuleKey
     }
 
 
@@ -209,7 +214,7 @@ finalEvaluationForProject projectContext =
             ]
 
         _ ->
-            Debug.todo ""
+            []
 
 
 moduleDefinitionVisitor : Node Module -> ModuleContext -> ( List (Rule.Error {}), ModuleContext )
@@ -217,7 +222,7 @@ moduleDefinitionVisitor node context =
     if (Node.value node |> Module.moduleName) == [ "StubCssGenerator" ] then
         ( []
         , { context
-            | range = Just (Node.range node)
+            | isSpecialModule = True
           }
         )
 
