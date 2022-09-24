@@ -6,6 +6,9 @@
 - [ ] Run `GenerateCss.elm` to output `styles.css`
 - [ ] Copy `styles.css` and `elm.js` to `dist/`
 
+- [ ] Remove the corresponding static styles from the source code in the secret folder
+- [ ] Run elm make on the code in the secret folder
+
 - [ ] How do we turn `Css.Style -> String`?
 - [ ] Remove hardcoding of the list of styles
   - [ ] Gather `ModuleContext` that includes all static styles, and the imports they use
