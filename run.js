@@ -4,6 +4,14 @@ const { compileToStringSync } = require("node-elm-compiler");
 const fs = require("fs");
 
 async function run() {
+  const userElmJson = JSON.parse(fs.readFileSync("./elm.json"));
+  fs.writeFileSync(
+    "./.elm-css-transpiler/elm.json",
+    JSON.stringify(rewriteElmJson(userElmJson))
+  );
+
+  process.chdir(".elm-css-transpiler");
+
   (function () {
     const string = compileToStringSync(["./src/CssGenerator.elm"], {
       output: "tmp.js",
@@ -113,6 +121,23 @@ port sendFile : String -> Cmd msg
       fs.writeFileSync("./styles.css", fileBody);
     });
   }, 100);
+}
+
+function rewriteElmJson(elmJson) {
+  // Since we're copying the user's `src/` directory,
+  // we leave that part of the elm.json unmodified
+  elmJson["source-directories"] = elmJson["source-directories"].filter(
+    (item) => {
+      return item != "src";
+    }
+  );
+  // prepend ../ to remaining entries since we created a folder one level up from the user's project
+  elmJson["source-directories"] = elmJson["source-directories"].map((item) => {
+    return "../" + item;
+  });
+  elmJson["source-directories"].push("src/");
+
+  return elmJson;
 }
 
 run();

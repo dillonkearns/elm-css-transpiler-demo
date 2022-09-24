@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "build": "npm install && cp -r public dist/ && elm make src/Main.elm --output dist/elm.js"
+    "build": "npm install && cp -r public dist/ && sh ./copy-project.sh"
   },
   "devDependencies": {
     "elm-review": "^2.7.5",
