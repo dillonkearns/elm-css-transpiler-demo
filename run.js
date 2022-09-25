@@ -2,7 +2,7 @@
 
 const { compileToStringSync } = require("node-elm-compiler");
 const fs = require("fs");
-const { spawnSync } = require("child_process");
+const spawnSync = require("cross-spawn").sync;
 
 async function run() {
   const userElmJson = JSON.parse(fs.readFileSync("./elm.json"));
@@ -139,6 +139,7 @@ function runElmReview() {
     {
       env: process.env,
       shell: true,
+      stdio: "inherit",
     }
   );
   if (output.status === 0) {
