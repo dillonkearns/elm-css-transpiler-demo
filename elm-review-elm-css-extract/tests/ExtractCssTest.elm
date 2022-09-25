@@ -56,7 +56,7 @@ import Css exposing (Style)
 
 generatedCssListHere____THIS_IS_MY_SPECIAL_CODE : String
 generatedCssListHere____THIS_IS_MY_SPECIAL_CODE =
-   "import Css\\n\\nclasses = [ [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ]"
+   "import Css\\n\\nclasses = [ ( 1068125959 , [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ) ]"
 
 """
                             ]

@@ -33,22 +33,22 @@ import Css
 import Css.Global
 import Css.Preprocess
 import Css.Preprocess.Resolve
-import Murmur3
 import Regex
 
 ${fileBody}
 
-toCssFile : List (List Css.Style) -> String
+toCssFile : List ( Int, List Css.Style ) -> String
 toCssFile lists =
     lists
         |> List.map
-            (\\styles ->
+            (\\(hash, styles) ->
                 let
-                    ( hashedName, body ) =
+                    body =
                         styleToClassGroup styles
                 in
                 "."
-                    ++ hashedName
+                    ++ "my-style"
+                    ++ String.fromInt hash
                     ++ " {\\n"
                     ++ body
                     ++ "\\n}"
@@ -56,16 +56,9 @@ toCssFile lists =
         |> String.join "\\n\\n"
 
 
-styleToClassGroup : List Css.Style -> ( String, String )
+styleToClassGroup : List Css.Style -> String
 styleToClassGroup styles =
-    let
-        allAsString : String
-        allAsString =
-            styles |> List.map (\\style -> "    " ++ styleToString style) |> String.join "\\n"
-    in
-    ( "my-style" ++ (Murmur3.hashString 0 allAsString |> String.fromInt)
-    , allAsString
-    )
+    styles |> List.map (\\style -> "    " ++ styleToString style) |> String.join "\\n"
 
 
 styleToString : Css.Style -> String

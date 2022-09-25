@@ -164,29 +164,51 @@ extractStyleFixes node =
                         extractedStyles =
                             -- TODO filter down list (don't assume all are extractable)
                             styleNodes
+                                |> List.filterMap extractStyleNode
                     in
-                    Just
-                        ( hash
-                        , [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
-                                (node |> Node.range)
-                                (styleNodes
-                                    |> List.map
-                                        (\styleNode ->
-                                            Review.Fix.replaceRangeBy (Node.range styleNode)
-                                                "(Css.batch [])"
+                    case extractedStyles of
+                        [] ->
+                            Nothing
+
+                        _ ->
+                            Just
+                                ( hash
+                                , [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
+                                        (node |> Node.range)
+                                        (styleNodes
+                                            |> List.map
+                                                (\styleNode ->
+                                                    Review.Fix.replaceRangeBy (Node.range styleNode)
+                                                        "(Css.batch [])"
+                                                )
                                         )
+                                  ]
+                                , extractedStyles
                                 )
-                          ]
-                        , extractedStyles
-                        )
 
                 _ ->
                     Nothing
 
-        --( [], context )
         _ ->
-            --( [], context )
             Nothing
+
+
+extractStyleNode : Node Expression -> Maybe (Node Expression)
+extractStyleNode node =
+    case node |> Node.value of
+        Expression.ParenthesizedExpression paren ->
+            extractStyleNode paren
+
+        Expression.Application applied ->
+            case List.map Node.value applied of
+                [ Expression.FunctionOrValue [ "Css" ] "batch", Expression.ListExpr [] ] ->
+                    Nothing
+
+                _ ->
+                    Just node
+
+        _ ->
+            Just node
 
 
 expressionToString : Node Expression -> String
@@ -308,21 +330,23 @@ finalEvaluationForProject projectContext =
             --    , details = [ "" ]
             --    }
             --    (Debug.todo "range")
-            case projectContext.extractedStyles |> Dict.values of
-                [ singleExtractedClass ] ->
+            case projectContext.extractedStyles |> Dict.toList of
+                [ ( singleHash, singleExtractedClass ) ] ->
                     [ Rule.errorForModuleWithFix moduleKey
                         { message = "TODO"
                         , details = [ "" ]
                         }
                         range
                         [ Review.Fix.replaceRangeBy range
-                            (""""import Css\\n\\nclasses = [ [ """
+                            ("\"import Css\\n\\nclasses = [ ( "
+                                ++ String.fromInt singleHash
+                                ++ " , [ "
                                 ++ (singleExtractedClass
                                         |> List.Extra.uniqueBy expressionToString
                                         |> List.map (expressionToString >> escapeQuotes)
                                         |> String.join ", "
                                    )
-                                ++ " ] ]\"\n"
+                                ++ " ] ) ]\"\n"
                             )
                         ]
                     ]
