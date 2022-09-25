@@ -2,6 +2,7 @@
 
 const { compileToStringSync } = require("node-elm-compiler");
 const fs = require("fs");
+const { spawnSync } = require("child_process");
 
 async function run() {
   const userElmJson = JSON.parse(fs.readFileSync("./elm.json"));
@@ -12,6 +13,9 @@ async function run() {
 
   process.chdir(".elm-css-transpiler");
 
+  runElmReview();
+  fs.writeFileSync("./src/CssGenerator.elm", cssGeneratorSrc());
+
   (function () {
     const string = compileToStringSync(["./src/CssGenerator.elm"], {
       output: "tmp.js",
@@ -21,11 +25,11 @@ async function run() {
     eval(string.toString());
     const app = this.Elm.CssGenerator.init({ flags: {} });
     app.ports.sendFile.subscribe((fileBody) => {
-      console.log("output", fileBody);
       fs.writeFileSync(
         "./src/Output.elm",
         `port module Output exposing (main)
 
+import Css
 import Css.Global
 import Css.Preprocess
 import Css.Preprocess.Resolve
@@ -123,6 +127,21 @@ port sendFile : String -> Cmd msg
   }, 100);
 }
 
+function runElmReview() {
+  const output = spawnSync("elm-review", [
+    "--config",
+    "../elm-review-elm-css-extract/preview/",
+    "--fix-all-without-prompt",
+    "--debug",
+  ]);
+  if (output.status === 0) {
+  } else {
+    console.log("elm-review error");
+    console.log(output.output.toString());
+    process.exit(1);
+  }
+}
+
 function rewriteElmJson(elmJson) {
   // Since we're copying the user's `src/` directory,
   // we leave that part of the elm.json unmodified
@@ -141,3 +160,39 @@ function rewriteElmJson(elmJson) {
 }
 
 run();
+
+function cssGeneratorSrc() {
+  return /* elm */ `port module CssGenerator exposing (main)
+
+import StubCssGenerator
+
+
+type alias Flags =
+    ()
+
+
+type Msg
+    = NoOp
+
+
+type alias Model =
+    {}
+
+
+main : Program Flags Model Msg
+main =
+    Platform.worker
+        { init = init
+        , update = \\_ model -> ( model, Cmd.none )
+        , subscriptions = \\_ -> Sub.none
+        }
+
+
+init : Flags -> ( Model, Cmd Msg )
+init _ =
+    ( {}, sendFile (StubCssGenerator.generatedCssListHere____THIS_IS_MY_SPECIAL_CODE) )
+
+
+port sendFile : String -> Cmd msg
+  `;
+}
