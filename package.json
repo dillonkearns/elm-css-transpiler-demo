@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "npm install && cp -r public dist/ && sh ./copy-project.sh"
+    "build": "npm install && cp -r public dist/ && sh ./copy-project.sh",
+    "prepare": "elm-tooling install"
   },
   "devDependencies": {
     "elm-review": "^2.7.5",
