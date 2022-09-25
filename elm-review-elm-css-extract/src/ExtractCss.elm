@@ -123,12 +123,12 @@ expressionVisitor node direction context =
                             cssAttrEndLocation =
                                 Node.range singleAttrNodes |> .end
                         in
-                        ( fixes
-                            ++ [ Rule.errorWithFix { message = "Add hashed class attr", details = [ "" ] }
-                                    (node |> Node.range)
-                                    [ Review.Fix.insertAt cssAttrEndLocation <| ", Html.Styled.Attributes.class \"my-style" ++ String.fromInt hash ++ "\""
-                                    ]
-                               ]
+                        ( [ Rule.errorWithFix { message = "Add hashed class attr", details = [ "" ] }
+                                (node |> Node.range)
+                                ((Review.Fix.insertAt cssAttrEndLocation <| ", Html.Styled.Attributes.class \"my-style" ++ String.fromInt hash ++ "\"")
+                                    :: (fixes |> List.concat)
+                                )
+                          ]
                         , { context
                             | extractedStyles =
                                 context.extractedStyles
@@ -173,15 +173,12 @@ extractStyleFixes node =
                         _ ->
                             Just
                                 ( hash
-                                , [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
-                                        (node |> Node.range)
-                                        (styleNodes
-                                            |> List.map
-                                                (\styleNode ->
-                                                    Review.Fix.replaceRangeBy (Node.range styleNode)
-                                                        "(Css.batch [])"
-                                                )
-                                        )
+                                , [ styleNodes
+                                        |> List.map
+                                            (\styleNode ->
+                                                Review.Fix.replaceRangeBy (Node.range styleNode)
+                                                    "(Css.batch [])"
+                                            )
                                   ]
                                 , extractedStyles
                                 )

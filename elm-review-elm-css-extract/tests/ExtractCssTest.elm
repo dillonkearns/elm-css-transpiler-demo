@@ -84,8 +84,8 @@ import Html.Styled.Attributes exposing (css)
 view =
     div
         [ Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.hex "#ff375a")
-            , Css.color (Css.hex "#ffffff")
+            [ (Css.batch [])
+            , (Css.batch [])
             ], Html.Styled.Attributes.class "my-style1068125959"
         ]
         []
@@ -112,63 +112,9 @@ import Html.Styled.Attributes exposing (css)
 view =
     div
         [ Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.hex "#ff375a")
-            , Css.color (Css.hex "#ffffff")
+            [ (Css.batch [])
+            , (Css.batch [])
             ], Html.Styled.Attributes.class "my-style1068125959"
-        ]
-        []
-"""
-                            , Review.Test.error
-                                { message = "Temp"
-                                , details = [ "" ]
-                                , under =
-                                    """Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.hex "#ff375a")
-            , Css.color (Css.hex "#ffffff")
-            ]"""
-                                }
-                                |> Review.Test.whenFixed
-                                    """module A exposing (..)
-
-import Css
-import Html as H exposing (Html)
-import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css)
-
-
-view =
-    div
-        [ Html.Styled.Attributes.css
-            [ (Css.batch [])
-            , (Css.batch [])
-            ]
-        ]
-        []
-"""
-                            , Review.Test.error
-                                { message = "Temp"
-                                , details = [ "" ]
-                                , under =
-                                    """Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.hex "#ff375a")
-            , Css.color (Css.hex "#ffffff")
-            ]"""
-                                }
-                                |> Review.Test.whenFixed
-                                    """module A exposing (..)
-
-import Css
-import Html as H exposing (Html)
-import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css)
-
-
-view =
-    div
-        [ Html.Styled.Attributes.css
-            [ (Css.batch [])
-            , (Css.batch [])
-            ]
         ]
         []
 """
