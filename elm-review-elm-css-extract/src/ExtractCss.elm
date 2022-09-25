@@ -115,30 +115,20 @@ expressionVisitor node direction context =
 
     else
         case node |> Node.value of
-            Expression.Application nodes ->
-                case nodes |> List.map Node.value of
-                    [ Expression.FunctionOrValue [ "Html", "Styled", "Attributes" ] "css", Expression.ListExpr styleNodes ] ->
+            Expression.ListExpr [ singleAttrNodes ] ->
+                case extractStyleFixes singleAttrNodes of
+                    Just ( hash, fixes, extractedStyles ) ->
                         let
-                            hash : Int
-                            hash =
-                                List.map expressionToString styleNodes
-                                    |> String.join ""
-                                    |> Murmur3.hashString 0
-
-                            extractedStyles =
-                                -- TODO filter down list (don't assume all are extractable)
-                                styleNodes
+                            cssAttrEndLocation : Elm.Syntax.Range.Location
+                            cssAttrEndLocation =
+                                Node.range singleAttrNodes |> .end
                         in
-                        ( [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
-                                (node |> Node.range)
-                                (styleNodes
-                                    |> List.map
-                                        (\styleNode ->
-                                            Review.Fix.replaceRangeBy (Node.range styleNode)
-                                                "(Css.batch [])"
-                                        )
-                                )
-                          ]
+                        ( fixes
+                            ++ [ Rule.errorWithFix { message = "Add hashed class attr", details = [ "" ] }
+                                    (node |> Node.range)
+                                    [ Review.Fix.insertAt cssAttrEndLocation <| ", Html.Styled.Attributes.class \"my-style" ++ String.fromInt hash ++ "\""
+                                    ]
+                               ]
                         , { context
                             | extractedStyles =
                                 context.extractedStyles
@@ -152,11 +142,51 @@ expressionVisitor node direction context =
                           }
                         )
 
-                    _ ->
+                    Nothing ->
                         ( [], context )
 
             _ ->
                 ( [], context )
+
+
+extractStyleFixes node =
+    case node |> Node.value of
+        Expression.Application nodes ->
+            case nodes |> List.map Node.value of
+                [ Expression.FunctionOrValue [ "Html", "Styled", "Attributes" ] "css", Expression.ListExpr styleNodes ] ->
+                    let
+                        hash : Int
+                        hash =
+                            List.map expressionToString styleNodes
+                                |> String.join ""
+                                |> Murmur3.hashString 0
+
+                        extractedStyles =
+                            -- TODO filter down list (don't assume all are extractable)
+                            styleNodes
+                    in
+                    Just
+                        ( hash
+                        , [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
+                                (node |> Node.range)
+                                (styleNodes
+                                    |> List.map
+                                        (\styleNode ->
+                                            Review.Fix.replaceRangeBy (Node.range styleNode)
+                                                "(Css.batch [])"
+                                        )
+                                )
+                          ]
+                        , extractedStyles
+                        )
+
+                _ ->
+                    Nothing
+
+        --( [], context )
+        _ ->
+            --( [], context )
+            Nothing
 
 
 expressionToString : Node Expression -> String
