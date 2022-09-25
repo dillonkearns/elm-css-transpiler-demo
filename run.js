@@ -128,12 +128,19 @@ port sendFile : String -> Cmd msg
 }
 
 function runElmReview() {
-  const output = spawnSync("elm-review", [
-    "--config",
-    "../elm-review-elm-css-extract/preview/",
-    "--fix-all-without-prompt",
-    "--debug",
-  ]);
+  const output = spawnSync(
+    "elm-review",
+    [
+      "--config",
+      "../elm-review-elm-css-extract/preview/",
+      "--fix-all-without-prompt",
+      "--debug",
+    ],
+    {
+      env: process.env,
+      shell: true,
+    }
+  );
   if (output.status === 0) {
   } else {
     console.log("elm-review error");
