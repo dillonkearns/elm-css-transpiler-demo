@@ -5,7 +5,7 @@ TMP_DIR=".elm-css-transpiler"
 mkdir -p $TMP_DIR
 cp -r src/ $TMP_DIR/src
 # (cd $TMP_DIR && elm-review --config ../elm-review-elm-css-extract/preview/ --fix-all-without-prompt --debug --elmjson elm.json  && cat src/StubCssGenerator.elm)
-node ./run.js
+npx node ./run.js
 cp $TMP_DIR/styles.css dist/styles.css
 elm make src/Main.elm --output dist/elm.js
 
