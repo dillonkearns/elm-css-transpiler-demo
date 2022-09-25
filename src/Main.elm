@@ -35,7 +35,7 @@ update msg model =
 view : Model -> H.Html Msg
 view model =
     div
-        [ css
+        [ Html.Styled.Attributes.css
             [ Css.backgroundColor (Css.hex "#ff375a")
             , Css.color (Css.hex "#ffffff")
             ]

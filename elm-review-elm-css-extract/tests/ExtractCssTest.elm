@@ -32,7 +32,7 @@ import Html.Styled.Attributes exposing (css)
 
 view =
     div
-        [ css
+        [ Html.Styled.Attributes.css
             [ Css.backgroundColor (Css.hex "#ff375a")
             , Css.color (Css.hex "#ffffff")
             ]
@@ -58,6 +58,64 @@ generatedCssListHere____THIS_IS_MY_SPECIAL_CODE : String
 generatedCssListHere____THIS_IS_MY_SPECIAL_CODE =
    "import Css\\n\\nclasses = [ [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ]"
 
+"""
+                            ]
+                          )
+                        , ( "A"
+                          , [ Review.Test.error
+                                { message = "Temp"
+                                , details = [ "" ]
+                                , under =
+                                    --"""Css.backgroundColor (Css.hex "#ff375a")"""
+                                    """Html.Styled.Attributes.css
+            [ Css.backgroundColor (Css.hex "#ff375a")
+            , Css.color (Css.hex "#ffffff")
+            ]"""
+                                }
+                                |> Review.Test.whenFixed
+                                    """module A exposing (..)
+
+import Css
+import Html as H exposing (Html)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
+
+
+view =
+    div
+        [ Html.Styled.Attributes.css
+            [ (Css.batch [])
+            , (Css.batch [])
+            ]
+        ]
+        []
+"""
+                            , Review.Test.error
+                                { message = "Temp"
+                                , details = [ "" ]
+                                , under =
+                                    """Html.Styled.Attributes.css
+            [ Css.backgroundColor (Css.hex "#ff375a")
+            , Css.color (Css.hex "#ffffff")
+            ]"""
+                                }
+                                |> Review.Test.whenFixed
+                                    """module A exposing (..)
+
+import Css
+import Html as H exposing (Html)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css)
+
+
+view =
+    div
+        [ Html.Styled.Attributes.css
+            [ (Css.batch [])
+            , (Css.batch [])
+            ]
+        ]
+        []
 """
                             ]
                           )

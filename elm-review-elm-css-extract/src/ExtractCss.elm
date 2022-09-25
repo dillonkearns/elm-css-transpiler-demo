@@ -13,7 +13,11 @@ import Elm.Syntax.Module as Module exposing (Module)
 import Elm.Syntax.ModuleName exposing (ModuleName)
 import Elm.Syntax.Node as Node exposing (Node)
 import Elm.Syntax.Range exposing (Range)
+import Elm.Writer
+import List.Extra
 import Maybe.Extra
+import Murmur3
+import Regex
 import Review.Fix
 import Review.Rule as Rule exposing (Rule)
 import Set exposing (Set)
@@ -110,12 +114,62 @@ expressionVisitor node direction context =
                 ( [], context )
 
     else
-        ( [], context )
+        case node |> Node.value of
+            Expression.Application nodes ->
+                case nodes |> List.map Node.value of
+                    [ Expression.FunctionOrValue [ "Html", "Styled", "Attributes" ] "css", Expression.ListExpr styleNodes ] ->
+                        let
+                            hash : Int
+                            hash =
+                                List.map expressionToString styleNodes
+                                    |> String.join ""
+                                    |> Murmur3.hashString 0
+
+                            extractedStyles =
+                                -- TODO filter down list (don't assume all are extractable)
+                                styleNodes
+                        in
+                        ( [ Rule.errorWithFix { message = "Temp", details = [ "" ] }
+                                (node |> Node.range)
+                                (styleNodes
+                                    |> List.map
+                                        (\styleNode ->
+                                            Review.Fix.replaceRangeBy (Node.range styleNode)
+                                                "(Css.batch [])"
+                                        )
+                                )
+                          ]
+                        , { context
+                            | extractedStyles =
+                                context.extractedStyles
+                                    |> Dict.update hash
+                                        (\maybeFound ->
+                                            maybeFound
+                                                |> Maybe.withDefault []
+                                                |> List.append extractedStyles
+                                                |> Just
+                                        )
+                          }
+                        )
+
+                    _ ->
+                        ( [], context )
+
+            _ ->
+                ( [], context )
+
+
+expressionToString : Node Expression -> String
+expressionToString style =
+    style
+        |> Elm.Writer.writeExpression
+        |> Elm.Writer.write
 
 
 type alias ProjectContext =
     { -- Modules exposed by the package, that we should not report
       fixPlaceholderModuleKey : Maybe ( Rule.ModuleKey, Range )
+    , extractedStyles : Dict Int (List (Node Expression))
     }
 
 
@@ -125,12 +179,15 @@ type alias ModuleContext =
       --, used : Set ( ModuleName, String )
       range : Maybe Range
     , isSpecialModule : Bool
+    , extractedStyles : Dict Int (List (Node Expression))
     }
 
 
 initialProjectContext : ProjectContext
 initialProjectContext =
-    { fixPlaceholderModuleKey = Nothing }
+    { fixPlaceholderModuleKey = Nothing
+    , extractedStyles = Dict.empty
+    }
 
 
 fromProjectToModule : Rule.ModuleKey -> Node ModuleName -> ProjectContext -> ModuleContext
@@ -141,6 +198,7 @@ fromProjectToModule moduleKey moduleName projectContext =
     --}
     { range = Nothing
     , isSpecialModule = False
+    , extractedStyles = Dict.empty
     }
 
 
@@ -170,6 +228,7 @@ fromModuleToProject moduleKey moduleName moduleContext =
 
         else
             Nothing
+    , extractedStyles = moduleContext.extractedStyles
     }
 
 
@@ -189,7 +248,23 @@ foldProjectContexts newContext previousContext =
         Maybe.Extra.or
             previousContext.fixPlaceholderModuleKey
             newContext.fixPlaceholderModuleKey
+    , extractedStyles = mergeStyles newContext.extractedStyles previousContext.extractedStyles
     }
+
+
+
+--mergeStyles : Dict comparable appendable -> Dict comparable appendable -> Dict comparable appendable
+
+
+mergeStyles =
+    Dict.merge (\hash styles dict -> Dict.insert hash styles dict)
+        (\hash styles1 styles2 dict ->
+            Dict.insert hash
+                (styles1 ++ styles2)
+                dict
+        )
+        (\hash styles dict -> Dict.insert hash styles dict)
+        Dict.empty
 
 
 finalEvaluationForProject : ProjectContext -> List (Rule.Error { useErrorForModule : () })
@@ -203,18 +278,43 @@ finalEvaluationForProject projectContext =
             --    , details = [ "" ]
             --    }
             --    (Debug.todo "range")
-            [ Rule.errorForModuleWithFix moduleKey
-                { message = "TODO"
-                , details = [ "" ]
-                }
-                range
-                [ Review.Fix.replaceRangeBy range """"import Css\\n\\nclasses = [ [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ]"
-"""
-                ]
-            ]
+            case projectContext.extractedStyles |> Dict.values of
+                [ singleExtractedClass ] ->
+                    [ Rule.errorForModuleWithFix moduleKey
+                        { message = "TODO"
+                        , details = [ "" ]
+                        }
+                        range
+                        [ Review.Fix.replaceRangeBy range
+                            (""""import Css\\n\\nclasses = [ [ """
+                                ++ (singleExtractedClass
+                                        |> List.Extra.uniqueBy expressionToString
+                                        |> List.map (expressionToString >> escapeQuotes)
+                                        |> String.join ", "
+                                   )
+                                ++ " ] ]\"\n"
+                            )
+                        ]
+                    ]
+
+                [] ->
+                    []
+
+                _ ->
+                    [ Rule.globalError
+                        { message = "Unhandled case"
+                        , details = [ "" ]
+                        }
+                    ]
 
         _ ->
             []
+
+
+escapeQuotes : String -> String
+escapeQuotes string =
+    string
+        |> String.replace "\"" "\\\""
 
 
 moduleDefinitionVisitor : Node Module -> ModuleContext -> ( List (Rule.Error {}), ModuleContext )
