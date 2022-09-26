@@ -37,7 +37,9 @@ view =
             , Css.color (Css.hex "#ffffff")
             ]
         ]
-        []
+        [ div [ Html.Styled.Attributes.css [ Css.displayFlex ] ]
+              []
+        ]
 """
                 , extractorModule
                 ]
@@ -56,21 +58,20 @@ import Css exposing (Style)
 
 generatedCssListHere____THIS_IS_MY_SPECIAL_CODE : String
 generatedCssListHere____THIS_IS_MY_SPECIAL_CODE =
-   "import Css\\n\\nclasses = [ ( 1068125959 , [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ) ]"
+   "import Css\\n\\nclasses = [ ( 1068125959 , [ Css.backgroundColor (Css.hex \\"#ff375a\\"), Css.color (Css.hex \\"#ffffff\\") ] ) ,( 1739655146 , [ Css.displayFlex ] ) ]"
 
 """
                             ]
                           )
                         , ( "A"
                           , [ Review.Test.error
-                                { message = "Add hashed class attr"
-                                , details = [ "" ]
+                                { message = "Add hashed class attr 1068125959"
+                                , details = [ "1068125959" ]
                                 , under =
-                                    """[ Html.Styled.Attributes.css
+                                    """Html.Styled.Attributes.css
             [ Css.backgroundColor (Css.hex "#ff375a")
             , Css.color (Css.hex "#ffffff")
-            ]
-        ]"""
+            ]"""
                                 }
                                 |> Review.Test.whenFixed
                                     """module A exposing (..)
@@ -88,17 +89,15 @@ view =
             , (Css.batch [])
             ], Html.Styled.Attributes.class "my-style1068125959"
         ]
-        []
+        [ div [ Html.Styled.Attributes.css [ Css.displayFlex ] ]
+              []
+        ]
 """
                             , Review.Test.error
-                                { message = "Add hashed class attr"
-                                , details = [ "" ]
+                                { message = "Add hashed class attr 1739655146"
+                                , details = [ "1739655146" ]
                                 , under =
-                                    """[ Html.Styled.Attributes.css
-            [ Css.backgroundColor (Css.hex "#ff375a")
-            , Css.color (Css.hex "#ffffff")
-            ]
-        ]"""
+                                    """Html.Styled.Attributes.css [ Css.displayFlex ]"""
                                 }
                                 |> Review.Test.whenFixed
                                     """module A exposing (..)
@@ -112,11 +111,13 @@ import Html.Styled.Attributes exposing (css)
 view =
     div
         [ Html.Styled.Attributes.css
-            [ (Css.batch [])
-            , (Css.batch [])
-            ], Html.Styled.Attributes.class "my-style1068125959"
+            [ Css.backgroundColor (Css.hex "#ff375a")
+            , Css.color (Css.hex "#ffffff")
+            ]
         ]
-        []
+        [ div [ Html.Styled.Attributes.css [ (Css.batch []) ], Html.Styled.Attributes.class "my-style1739655146" ]
+              []
+        ]
 """
                             ]
                           )
