@@ -94,8 +94,8 @@ expressionVisitor node direction context =
                 ( [], context )
 
     else
-        case node |> Node.value of
-            Expression.ListExpr [ singleAttrNodes ] ->
+        case ( node |> Node.value, direction ) of
+            ( Expression.ListExpr [ singleAttrNodes ], Rule.OnEnter ) ->
                 case extractStyleFixes singleAttrNodes of
                     Just ( hash, fixes, extractedStyles ) ->
                         let
