@@ -103,8 +103,8 @@ expressionVisitor node direction context =
                             cssAttrEndLocation =
                                 Node.range singleAttrNodes |> .end
                         in
-                        ( [ Rule.errorWithFix { message = "Add hashed class attr", details = [ "" ] }
-                                (node |> Node.range)
+                        ( [ Rule.errorWithFix { message = "Add hashed class attr " ++ String.fromInt hash, details = [ String.fromInt hash ] }
+                                (singleAttrNodes |> Node.range)
                                 ((Review.Fix.insertAt cssAttrEndLocation <| ", Html.Styled.Attributes.class \"my-style" ++ String.fromInt hash ++ "\"")
                                     :: (fixes |> List.concat)
                                 )
@@ -265,38 +265,42 @@ finalEvaluationForProject projectContext =
     case projectContext.fixPlaceholderModuleKey of
         Just ( moduleKey, range ) ->
             case projectContext.extractedStyles |> Dict.toList of
-                [ ( singleHash, singleExtractedClass ) ] ->
+                [] ->
+                    []
+
+                allStyles ->
                     [ Rule.errorForModuleWithFix moduleKey
                         { message = "TODO"
                         , details = [ "" ]
                         }
                         range
                         [ Review.Fix.replaceRangeBy range
-                            ("\"import Css\\n\\nclasses = [ ( "
-                                ++ String.fromInt singleHash
-                                ++ " , [ "
-                                ++ (singleExtractedClass
-                                        |> List.Extra.uniqueBy expressionToString
-                                        |> List.map (expressionToString >> escapeQuotes)
-                                        |> String.join ", "
+                            ("\"import Css\\n\\nclasses = [ "
+                                ++ (List.map
+                                        extractedClassToString
+                                        allStyles
+                                        |> String.join ","
                                    )
-                                ++ " ] ) ]\"\n"
+                                ++ "]\"\n"
                             )
                         ]
                     ]
 
-                [] ->
-                    []
-
-                _ ->
-                    [ Rule.globalError
-                        { message = "Unhandled case"
-                        , details = [ "" ]
-                        }
-                    ]
-
         _ ->
             []
+
+
+extractedClassToString : ( Int, List (Node Expression) ) -> String
+extractedClassToString ( hash, c ) =
+    "( "
+        ++ String.fromInt hash
+        ++ " , [ "
+        ++ (c
+                |> List.Extra.uniqueBy expressionToString
+                |> List.map (expressionToString >> escapeQuotes)
+                |> String.join ", "
+           )
+        ++ " ] ) "
 
 
 escapeQuotes : String -> String
